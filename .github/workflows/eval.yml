@@ -1,0 +1,37 @@
+name: Prompt Regression Eval
+
+on:
+  pull_request:
+    paths:
+      - "prompts/**"
+      - "golden_dataset/**"
+      - "classifier.py"
+
+jobs:
+  run-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run eval pipeline
+        run: python3 run_eval.py
+        # SLACK_WEBHOOK_URL is read from a GitHub secret once you add one.
+        # Until then, alerts.py just prints what it would have sent.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: reports/*.html
